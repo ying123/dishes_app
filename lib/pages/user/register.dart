@@ -1,8 +1,19 @@
 import 'dart:async';
+import '../../common/config/constant.dart';
+import '../../common/config/my_text.dart';
+import '../../common/provider/user_provider.dart';
+import '../../model/users.dart';
+import '../../routers/Application.dart';
+import '../../routers/Routers.dart';
+import '../../services/user_storage.dart';
+import 'package:fluro/fluro.dart';
+import 'package:provider/provider.dart';
 import '../../common/ScreenAdapter.dart';
 import '../../common/utils/toast.dart';
 import '../../common/widgets/MyButton.dart';
 import 'package:flutter/material.dart';
+import '../../common/http_util.dart';
+import '../../common/config/api_config.dart' as Config;
 class Register extends StatefulWidget{
   @override
   State<StatefulWidget> createState() {
@@ -13,12 +24,10 @@ class Register extends StatefulWidget{
 class _Register extends State<Register>{
   TextEditingController _phone; //手机号
   TextEditingController _code; //验证码
-  TextEditingController _realName; //姓名
   TextEditingController _pwd; //验证码
   FocusNode _phoneFocus=FocusNode();
   FocusNode _codeFocus=FocusNode();
   FocusNode _pwdFocus=FocusNode();
-  FocusNode _realNameFocus=FocusNode();
   bool _isButtonDisabled;
   /// 当前倒计时的秒数。
   int _seconds=60;
@@ -61,11 +70,9 @@ class _Register extends State<Register>{
     _phone=TextEditingController();
     _code=TextEditingController();
     _pwd=TextEditingController();
-    _realName=TextEditingController();
     _phone.addListener(() => setState(() => {}));
     _code.addListener(() => setState(() => {}));
     _pwd.addListener(() => setState(() => {}));
-    _realName.addListener(() => setState(() => {}));
 
     _isButtonDisabled=true;
   }
@@ -73,12 +80,12 @@ class _Register extends State<Register>{
     if(_isButtonDisabled){
       return FlatButton(
           onPressed: () {
-            if(_phone.text==""){
+            if(_phone.text.isEmpty){
               Toast.toast(context,msg: "请输入手机号");
               return;
             }
-            var phone = RegExp('^((13[0-9])|(15[^4])|(166)|(17[0-8])|(18[0-9])|(19[8-9])|(147,145))\\d{8}\$');
-            if (!phone.hasMatch(_phone.text)) {
+            var phone = RegExp(Constant.REG_EXP);
+            if (!phone.hasMatch(_phone.text.trim())) {
               Toast.toast(context, msg: "请输入正确的手机号");
               return;
             }
@@ -86,9 +93,11 @@ class _Register extends State<Register>{
             setState(() {
               _isButtonDisabled=false;
             });
+            HttpUtil.getInstance().get("${Config.Api.getCode}${_phone.text.trim()}").then((res){
+              Toast.toast(context,msg: "验证码：${res[Constant.result]}");
+            });
           },
-          child: Text(
-            "获取验证码",
+          child: Text("${MyText.codeName}",
             style: TextStyle(color: Color.fromARGB(255, 145, 41, 40),fontSize: ScreenAdapter.size(26)),
           )
       );
@@ -136,15 +145,12 @@ class _Register extends State<Register>{
                   })),
     );
   }
-
-
-
   @override
   Widget build(BuildContext context) {
     ScreenAdapter.init(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text("注册"),
+        title: Text(MyText.register),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -158,13 +164,6 @@ class _Register extends State<Register>{
                 width: ScreenAdapter.width(750),
                 height: ScreenAdapter.height(100),
                 child: _buildInputTextField("请输入手机号码",_phone,_phoneFocus,TextInputType.number,Icons.phone),
-              ),
-              Divider(height: ScreenAdapter.height(1),),
-              Container(
-                margin: EdgeInsets.only(top: ScreenAdapter.height(10)),
-                width: ScreenAdapter.width(750),
-                height: ScreenAdapter.height(100),
-                child: _buildInputTextField("请填写姓名",_realName,_realNameFocus,TextInputType.text,Icons.person),
               ),
               Divider(height: ScreenAdapter.height(1),),
               Divider(height: ScreenAdapter.height(1),),
@@ -193,7 +192,7 @@ class _Register extends State<Register>{
               Container(
               margin: EdgeInsets.only(top: ScreenAdapter.height(50)),
               child: MyButton(
-                title: "注册",
+                title: MyText.register,
                 color: Color.fromARGB(255, 145, 41, 40),
                 width: 900,
                 onTap: () {
@@ -201,23 +200,39 @@ class _Register extends State<Register>{
                       Toast.toast(context,msg: "请输入手机号");
                       return;
                     }
-                    var phone = RegExp('^((13[0-9])|(15[^4])|(166)|(17[0-8])|(18[0-9])|(19[8-9])|(147,145))\\d{8}\$');
-                    if (!phone.hasMatch(_phone.text)) {
+                    var phone = RegExp(Constant.REG_EXP);
+                    if (!phone.hasMatch(_phone.text.trim())) {
                       Toast.toast(context, msg: "请输入正确的手机号");
                       return;
                     }
-                    if(_realName.text==""){
-                      Toast.toast(context,msg: "请输入姓名");
-                      return;
-                    }
-                    if(_code.text==""){
+                    if(_code.text.isEmpty){
                       Toast.toast(context,msg: "请输入6位数字验证码");
                       return;
                     }
-                    if(_pwd.text==""){
+                    if(_pwd.text.isEmpty){
                       Toast.toast(context,msg: "请设置您的账户密码");
                       return;
                     }
+                    var params={Constant.phone:_phone.text.trim(),Constant.code:_code.text.trim(),Constant.pwd:_pwd.text.trim()};
+                    HttpUtil.getInstance().post(Config.Api.register,data:params ).then((res){
+                      switch(res[Constant.code]){
+                        case Constant.success:
+                          _registerSuccess();
+                          break;
+                        case Constant.error:
+                          Toast.toast(context,msg: "注册失败，联系管理员");
+                          break;
+                        case Constant.code_not_match:
+                          Toast.toast(context,msg: "验证码不匹配");
+                          break;
+                        case Constant.phone_exist:
+                          Toast.toast(context,msg: "手机号已注册，请登录");
+                          break;
+                        case Constant.code_past:
+                          Toast.toast(context, msg: "验证码已过期");
+                          break;
+                      }
+                    });
                 },
               ),
             ),
@@ -228,4 +243,15 @@ class _Register extends State<Register>{
     );
   }
 
+  //注册成功
+  _registerSuccess() async{
+    var user={Constant.phone:_phone.text.trim(),Constant.pwd:_pwd.text.trim()};
+    await HttpUtil.getInstance().post("${Config.Api.host}${Config.Api.login}", data: user).then((res){
+      UserModel user= UserModel.fromJson(res[Constant.result]);
+      UserStorage.setUser(user);
+      Application.token=user.token;
+      Provider.of<UserProvider>(context).setUser(res[Constant.result]);
+      Application.router.navigateTo(context, Routers.home,replace: true,clearStack: true,transition: TransitionType.fadeIn);
+    });
+  }
 }

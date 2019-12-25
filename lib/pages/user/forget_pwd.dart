@@ -1,10 +1,19 @@
 import 'dart:async';
+import '../../common/config/constant.dart';
+import '../../common/config/my_text.dart';
+import '../../common/provider/user_provider.dart';
+import '../../model/users.dart';
+import '../../routers/Application.dart';
+import '../../routers/Routers.dart';
+import '../../services/user_storage.dart';
+import 'package:fluro/fluro.dart';
+import 'package:provider/provider.dart';
 import '../../common/utils/toast.dart';
 import '../../common/widgets/MyButton.dart';
 import '../../common/ScreenAdapter.dart';
 import 'package:flutter/material.dart';
-import '../../common/Http.dart' as http;
-import '../../common/config/Config.dart' as config;
+import '../../common/http_util.dart';
+import '../../common/config/api_config.dart' as Config;
 
 class ForgetPwd extends StatefulWidget {
   _ForgetPwd createState() => _ForgetPwd();
@@ -13,18 +22,17 @@ class ForgetPwd extends StatefulWidget {
 class _ForgetPwd extends State<ForgetPwd> {
   TextEditingController _phone; //手机号
   TextEditingController _code; //验证码
-  TextEditingController _pwd; //验证码
+  TextEditingController _pwd; //密码
   FocusNode _phoneFocus = FocusNode();
   FocusNode _codeFocus = FocusNode();
   FocusNode _pwdFocus = FocusNode();
-  bool _isButtonDisabled;
 
+  //防止多次点击
+  bool _isButtonDisabled;
   /// 当前倒计时的秒数。
   int _seconds = 60;
-
   /// 倒计时的计时器。
   Timer _timer;
-
   /// 启动倒计时的计时器。
   void _startTimer() {
     // 计时器（`Timer`）组件的定期（`periodic`）构造函数，创建一个新的重复计时器。
@@ -43,6 +51,10 @@ class _ForgetPwd extends State<ForgetPwd> {
       }
     });
   }
+  /// 取消倒计时的计时器。
+  void _cancelTimer() {
+    _timer?.cancel();
+  }
 
   @override
   void initState() {
@@ -58,18 +70,14 @@ class _ForgetPwd extends State<ForgetPwd> {
 
   @override
   void dispose() {
-    super.dispose();
     _cancelTimer();
+    super.dispose();
+
   }
 
-  /// 取消倒计时的计时器。
-  void _cancelTimer() {
-    // 计时器（`Timer`）组件的取消（`cancel`）方法，取消计时器。
-    _timer?.cancel();
-  }
 
-  Widget _buildLoginNameTextField(
-      hintText, controller, focusNode, textInputType, icon) {
+  //封装当前页面输入框
+  Widget _buildTextField(hintText, controller, focusNode, textInputType, icon) {
     return TextFormField(
       keyboardType: textInputType,
       controller: controller,
@@ -104,25 +112,24 @@ class _ForgetPwd extends State<ForgetPwd> {
     if (_isButtonDisabled) {
       return FlatButton(
           onPressed: () {
-            if (_phone.text == "") {
+            if (_phone.text.isEmpty) {
               Toast.toast(context, msg: "请输入手机号");
               return;
             }
-            var phone = RegExp(
-                '^((13[0-9])|(15[^4])|(166)|(17[0-8])|(18[0-9])|(19[8-9])|(147,145))\\d{8}\$');
-            if (!phone.hasMatch(_phone.text)) {
-              Toast.toast(context, msg: "请输入正确的手机号");
+            var phone = RegExp(Constant.REG_EXP);
+            if (!phone.hasMatch(_phone.text.trim())) {
+              Toast.toast(context, msg: "手机号码格式不正确");
               return;
             }
             _startTimer();
-
             setState(() {
               _isButtonDisabled = false;
             });
+            HttpUtil.getInstance().get("${Config.Api.getCode}${_phone.text}").then((res){
+              Toast.toast(context,msg: "验证码：${res[Constant.result]}");
+            });
           },
-          child: Text(
-            "获取验证码",
-            style: TextStyle(
+          child: Text(MyText.codeName, style: TextStyle(
                 color: Color.fromARGB(255, 145, 41, 40),
                 fontSize: ScreenAdapter.size(30)),
           ));
@@ -148,7 +155,7 @@ class _ForgetPwd extends State<ForgetPwd> {
     ScreenAdapter.init(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text("忘记密码"),
+        title: Text(MyText.FORGET_PWD),
         centerTitle: true,
       ),
       body: Container(
@@ -163,7 +170,7 @@ class _ForgetPwd extends State<ForgetPwd> {
               decoration: BoxDecoration(
                   border: Border.all(width: 1, color: Colors.black12),
                   borderRadius: BorderRadius.circular(6)),
-              child: _buildLoginNameTextField("手机号", this._phone,
+              child: _buildTextField("手机号", this._phone,
                   this._phoneFocus, TextInputType.number, Icons.phone),
             ),
             Container(
@@ -175,7 +182,7 @@ class _ForgetPwd extends State<ForgetPwd> {
                     borderRadius: BorderRadius.circular(6)),
                 child: Stack(
                   children: <Widget>[
-                    _buildLoginNameTextField("验证码", this._code, this._codeFocus,
+                    _buildTextField("验证码", this._code, this._codeFocus,
                         TextInputType.number, Icons.verified_user),
                     Positioned(
                       right: ScreenAdapter.width(50),
@@ -190,7 +197,7 @@ class _ForgetPwd extends State<ForgetPwd> {
               decoration: BoxDecoration(
                   border: Border.all(width: 1, color: Colors.black12),
                   borderRadius: BorderRadius.circular(6)),
-              child: _buildLoginNameTextField("新密码", this._pwd, this._pwdFocus,
+              child: _buildTextField("新密码", this._pwd, this._pwdFocus,
                   TextInputType.emailAddress, Icons.https),
             ),
             Container(
@@ -200,25 +207,40 @@ class _ForgetPwd extends State<ForgetPwd> {
                 color: Color.fromARGB(255, 145, 41, 40),
                 width: double.infinity,
                 onTap: () {
-                  if (_phone.text == "") {
+                  if (_phone.text.isEmpty) {
                     Toast.toast(context, msg: "请输入手机号");
                     return;
                   }
-                  var phone = RegExp(
-                      '^((13[0-9])|(15[^4])|(166)|(17[0-8])|(18[0-9])|(19[8-9])|(147,145))\\d{8}\$');
-                  if (!phone.hasMatch(_phone.text)) {
-                    Toast.toast(context, msg: "请输入正确的手机号");
+                  var phone = RegExp(Constant.REG_EXP);
+                  if (!phone.hasMatch(_phone.text.trim())) {
+                    Toast.toast(context, msg: "手机号格式错误");
                     return;
                   }
-                  if (_code.text == "") {
+                  if (_code.text.isEmpty) {
                     Toast.toast(context, msg: "请输入6位数字验证码");
                     return;
                   }
-                  if (_pwd.text == "") {
+                  if (_pwd.text.isEmpty) {
                     Toast.toast(context, msg: "请输入密码");
                     return;
                   }
-                  Navigator.pop(context);
+                  var params={Constant.phone:_phone.text.trim(),Constant.code:_code.text.trim(),Constant.pwd:_pwd.text.trim()};
+                  HttpUtil.getInstance().post(Config.Api.updatePwd,data: params).then((res){
+                    switch(res[Constant.code]){
+                      case Constant.success:
+                        _success();
+                        break;
+                      case Constant.code_not_match:
+                        Toast.toast(context, msg: "验证码不匹配");
+                        break;
+                      case Constant.error:
+                        Toast.toast(context, msg: "服务器错误，请联系管理员");
+                        break;
+                      case Constant.code_past:
+                        Toast.toast(context, msg: "验证码已过期");
+                        break;
+                    }
+                  });
                 },
               ),
             ),
@@ -226,5 +248,15 @@ class _ForgetPwd extends State<ForgetPwd> {
         ),
       ),
     );
+  }
+  _success() async{
+    var user={Constant.phone:_phone.text.trim(),Constant.pwd:_pwd.text.trim()};
+    await HttpUtil.getInstance().post("${Config.Api.host}${Config.Api.login}", data: user).then((res){
+      UserModel user= UserModel.fromJson(res[Constant.result]);
+      UserStorage.setUser(user);
+      Application.token=user.token;
+      Provider.of<UserProvider>(context).setUser(res[Constant.result]);
+      Application.router.navigateTo(context, Routers.home,replace: true,clearStack: true,transition: TransitionType.fadeIn);
+    });
   }
 }

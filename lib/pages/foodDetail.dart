@@ -1,13 +1,15 @@
 
 import 'dart:convert';
-
+import '../common/widgets/loading.dart';
+import '../routers/Routers.dart';
+import '../common/provider/user_provider.dart';
 import 'package:fluro/fluro.dart';
-
+import 'package:provider/provider.dart';
 import '../routers/Application.dart';
 import 'package:flutter/material.dart';
 import '../common/ScreenAdapter.dart';
-import '../common/config/Config.dart' as Config;
-import '../common/Http.dart' as http;
+import '../common/config/api_config.dart' as Config;
+import '../common/http_util.dart';
 import '../common/widgets/MyButton.dart';
 import '../model/food.dart';
 
@@ -23,13 +25,13 @@ class _FoodDetail extends State<FoodDetail> {
   @override
   void initState() {
     super.initState();
-    http
+    HttpUtil.getInstance()
         .get(Config.Api.foodById +"${widget.foodId}")
         .then((res) {
       FoodModel model = FoodModel.fromJson(res);
       setState(() {
         _result = model.result;
-        _result.imgUrl="https://www.zlp.ltd/images/${_result.imgUrl}";
+        _result.imgUrl="${Config.Api.imgUrl+_result.imgUrl}";
       });
     });
 
@@ -69,9 +71,7 @@ class _FoodDetail extends State<FoodDetail> {
                 width: ScreenAdapter.getScreenWidth(),
                 color: Color.fromRGBO(247, 247, 247, 0.0),
                 child: _result == null
-                    ? Center(
-                        child: Text("加载中...."),
-                      )
+                    ? LoadingWidget()
                     : ListView(
                         children: <Widget>[
                           Container(
@@ -84,7 +84,7 @@ class _FoodDetail extends State<FoodDetail> {
                                   width: ScreenAdapter.getScreenWidth(),
                                   child: Image.network(
                                     _result.imgUrl,
-                                    fit: BoxFit.fill,
+                                    fit: BoxFit.cover,
                                   ),
                                 ),
                                 Container(
@@ -209,21 +209,14 @@ class _FoodDetail extends State<FoodDetail> {
                         title: "加入购物车",
                         size: 28,
                         onTap: () async{
-                          var data={"foodId":widget.foodId,"tableNo":Application.tableNo,"count":_count,"operation":1 };
-                          await http.post("${Config.Api.cart_item_edit}",formData:data );
-                          var param={"currentIndex":1,"phone":Application.phone,"tableNo":Application.tableNo,"personNum":Application.personNum,"remark":Application.remark};
-                          String jsonString = json.encode(param);
-                          var jsons = jsonEncode(Utf8Encoder().convert(jsonString));
-                          //Provider.of<Order_Information_Provider>(context).setInfo(OrderInformation.fromJson(param));
+                          var model= Provider.of<UserProvider>(context).getUser;
+                          var data={"foodId":widget.foodId,"tableNo":model["tableNo"],"count":_count,"operation":1 };
+                          await HttpUtil.getInstance().post("${Config.Api.cart_item_edit}",data:data );
+                          var param={"currentIndex":1,"phone":model["phone"],"tableNo":model["tableNo"],"personNum":model["personNum"],"remark":model["remark"]};
                           Application.router
                               .navigateTo(
-                              context, "/root?params=${jsons}",
-                              transition: TransitionType.fadeIn, replace: true)
-                              .then((result) {
-                            if (result != null) {}
-                          });
-
-
+                              context, "${Routers.root}?params=${jsonEncode(Utf8Encoder().convert(json.encode(param)))}",
+                              transition: TransitionType.fadeIn, replace: true);
                         },
                       ),
                     ),

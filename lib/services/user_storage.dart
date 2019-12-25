@@ -19,5 +19,8 @@ class UserStorage{
       return null;
     }
   }
+  static remove() async{
+    await Storage.remove("userInfo");
+  }
 
 }

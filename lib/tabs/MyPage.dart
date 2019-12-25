@@ -1,14 +1,35 @@
+import 'dart:io';
+import 'package:dishes_app/common/config/api_config.dart';
+import 'package:dishes_app/common/http_util.dart';
+import 'package:dishes_app/services/user_storage.dart';
+
+import '../routers/Application.dart';
+import '../routers/Routers.dart';
+import 'package:fluro/fluro.dart';
 import 'package:flutter/material.dart';
 import '../common/ScreenAdapter.dart';
+import 'package:image_picker/image_picker.dart';
 
-class MyPage extends StatelessWidget {
-
+class MyPage extends StatefulWidget {
+  var params;
+  MyPage(this.params);
+  @override
+  State<StatefulWidget> createState() {
+    // TODO: implement createState
+    return _myPage();
+  }
+}
+class _myPage extends State<MyPage>{
+  @override
+  void initState() {
+    super.initState();
+  }
   @override
   Widget build(BuildContext context) {
     ScreenAdapter.init(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text("会员中心"),//会员中心
+        title: Text("用户中心"),
         centerTitle: true,
       ),
       body: ListView(
@@ -16,10 +37,27 @@ class MyPage extends StatelessWidget {
           _topHeader(),
           _orderTitle(),
           _orderType(),
-          _actionList(),
+          _actionList(context),
         ],
       ),
     );
+  }
+
+  File _image;
+  String _headImgUrl;
+  _getImage() async {
+    var image = await ImagePicker.pickImage(source: ImageSource.gallery);
+    setState(() {
+      _image = image;
+    });
+    HttpUtil.getInstance().fileUpload(Api.uploadFile, _image.path,"${widget.params["phone"]}.png",(send,total){
+      print("$send===========$total");
+    }).then((res){
+      print(res);
+      setState(() {
+        _headImgUrl=res["result"];
+      });
+    });
   }
 
   //头像区域
@@ -30,20 +68,27 @@ class MyPage extends StatelessWidget {
       decoration: BoxDecoration(
         image: DecorationImage(
             image: AssetImage("./static/user_bg.jpg"),
-                fit: BoxFit.cover
+            fit: BoxFit.cover
         ),
       ),
       child: Column(
         children: <Widget>[
           Container(
             margin: EdgeInsets.only(top: ScreenAdapter.height(30)),
-
-            child: ClipOval(
-              child: SizedBox(
-                width: ScreenAdapter.height(200),
-                height: ScreenAdapter.height(200),
-                child: Image.asset('./static/user.png',fit: BoxFit.cover,),
-              ),
+            width: ScreenAdapter.height(200),
+            height: ScreenAdapter.height(200),
+            decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                image: DecorationImage(
+                    fit: BoxFit.cover,
+                    image:_headImgUrl==null?AssetImage("./static/user.png"):NetworkImage("https://www.zlp.ltd/head/$_headImgUrl" )
+                )
+            ),
+            child: GestureDetector(
+              onTap: ()async{
+                await _getImage();
+              },
+              child: Image.asset("./static/xiangji.png"),
             ),
           ),
           Container(
@@ -145,32 +190,44 @@ class MyPage extends StatelessWidget {
   }
 
 
-  Widget _myListTile(String title,IconData iconData){
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(width: ScreenAdapter.size(1),color: Colors.grey[100]),
+  Widget _myListTile(String title,IconData iconData,Object onTab){
+    return GestureDetector(
+      onTap: onTab,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            bottom: BorderSide(width: ScreenAdapter.size(1),color: Colors.grey[100]),
+          ),
         ),
-      ),
-      child: ListTile(
-        leading: Icon(iconData),
-        title: Text(title),
-        trailing: Icon(Icons.arrow_right),
+        child: ListTile(
+          leading: Icon(iconData),
+          title: Text(title),
+          trailing: Icon(Icons.arrow_right),
+        ),
       ),
     );
   }
 
   //其它操作列表
-  Widget _actionList(){
+  Widget _actionList(BuildContext context ){
     return Container(
       margin: EdgeInsets.only(top: ScreenAdapter.height(20),),
       child: Column(
         children: <Widget>[
-          _myListTile('历史订单',Icons.history),
-          _myListTile('我的钱包',Icons.monetization_on),
-          _myListTile('客服电话',Icons.phone_forwarded),
-          _myListTile('关于我们',Icons.movie),
+          _myListTile('修改密码',Icons.https,(){
+            Application.router.navigateTo(context, Routers.forgetPwd,transition: TransitionType.fadeIn);
+          }),
+          _myListTile('我的钱包',Icons.monetization_on,(){
+
+          }),
+          _myListTile('退出登录',Icons.phone_forwarded,()async{
+            await UserStorage.remove();
+            Application.router.navigateTo(context, Routers.userLogin,transition: TransitionType.fadeIn,clearStack: true,replace: true);
+          }),
+          _myListTile('关于我们',Icons.movie,(){
+
+          }),
         ],
       ),
     );

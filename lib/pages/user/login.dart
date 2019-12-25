@@ -1,75 +1,59 @@
-import 'dart:convert';
-import 'package:dishes_app/common/widgets/textfield.dart';
-import 'package:dishes_app/services/myTextField.dart';
 
-import '../../services/pNum.dart';
-import 'package:fluro/fluro.dart';
+import 'package:flutter/services.dart';
+
+import '../../common/config/constant.dart';
+import '../../common/config/my_text.dart';
+import '../../routers/Routers.dart';
 import '../../services/user_storage.dart';
+import 'package:fluro/fluro.dart';
+import 'package:provider/provider.dart';
+import '../../common/provider/user_provider.dart';
+import '../../common/widgets/textfield.dart';
 import '../../model/users.dart';
 import '../../routers/Application.dart';
-
 import '../../common/widgets/MyButton.dart';
 import '../../common/utils/toast.dart';
 import '../../common/ScreenAdapter.dart';
 import 'package:flutter/material.dart';
-import '../../common/config/Config.dart' as Config;
-import '../../common/Http.dart' as http;
+import '../../common/config/api_config.dart' as Config;
+import '../../common/http_util.dart';
 
 class LoginPage extends StatefulWidget {
-  LoginPage({Key key, this.title,this.params}) : super(key: key);
-  final String title;
-  String params;
   @override
-  State<StatefulWidget> createState() {
-    return _loginPage();
-  }
+  State<StatefulWidget> createState() =>_loginPage();
+
 }
-
-
 class _loginPage extends State<LoginPage> {
   TextEditingController _pwdController = TextEditingController();
   TextEditingController _phoneController = TextEditingController();
   final FocusNode _phoneFocusNode = FocusNode();
   final FocusNode _pwdFocusNode = FocusNode();
-  var _params;
+  DateTime lastPopTime;
   @override
   void initState() {
     super.initState();
-    _utf8Decoder();
+//    _utf8Decoder();
     _pwdController = TextEditingController();
     _phoneController = TextEditingController();
     _pwdController.addListener(() => setState(() => {}));
     _phoneController.addListener(() => setState(() => {}));
   }
 
-  _utf8Decoder(){
-    var list = List<int>();
-    ///字符串解码
-    jsonDecode(widget.params).forEach(list.add);
-    final String value = Utf8Decoder().convert(list);
-    _params = json.decode(value);
-  }
-
   //登录
   _login(phone,pwd)async{
-    await http.post("${Config.Api.host}${Config.Api.userLogin}", formData: {"phone": phone, "pwd": pwd}).then((res){
-      UserModel model=UserModel.fromJson(res);
-      UserStorage.setUser(model.user);//保存在本地
-      Application.tableNo=_params["tableNo"];
-      Application.personNum=_params["personNum"];
-      Application.remark=_params["remark"];
-      Application.phone=model.user.phone;
-      var param={"currentIndex":0,"phone":model.user.phone,"tableNo":_params["tableNo"],"personNum":_params["personNum"],"remark":_params["remark"]};
-      String jsonString = json.encode(param);
-      var jsons = jsonEncode(Utf8Encoder().convert(jsonString));
-      Application.router
-          .navigateTo(
-          context, "/root?params=${jsons}",
-          transition: TransitionType.fadeIn, replace: true)
-          .then((result) {
-        if (result != null) {}
-      });
-    });
+     await HttpUtil.getInstance().post("${Config.Api.host+Config.Api.login}", data: {Constant.phone: phone, Constant.pwd: pwd}).then((res){
+       if(res[Constant.code]==Constant.success){
+         if(res[Constant.result]==null){
+           Toast.toast(context,msg: "用户名密码错误");
+         }else{
+           UserModel user= UserModel.fromJson(res[Constant.result]);
+           UserStorage.setUser({Constant.phone: phone, Constant.pwd: pwd,"token":user.token});//用户名密码存本地
+           Application.token=user.token;
+           Provider.of<UserProvider>(context).setUser(res[Constant.result]);
+           Application.router.navigateTo(context, Routers.home,replace: true,clearStack: true,transition: TransitionType.fadeIn);
+         }
+       }
+     });
   }
 
   Widget _logo() {
@@ -81,7 +65,7 @@ class _loginPage extends State<LoginPage> {
         alignment: Alignment.center,
         child: ClipOval(
           child: Image.network(
-            "http://www.zlp.ltd/images/touxiang.png",
+            "${Config.Api.imgUrl}touxiang.png",
             width: ScreenAdapter.width(250),
             height: ScreenAdapter.width(250),
             fit: BoxFit.cover,
@@ -94,28 +78,42 @@ class _loginPage extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     ScreenAdapter.init(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("登陆/注册"),
-        centerTitle: true,
-        leading: Text(""),
+    return WillPopScope(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(MyText.LOGIN),
+          centerTitle: true,
+          leading: Text(""),
+        ),
+        body: Container(
+            margin: EdgeInsets.all(ScreenAdapter.width(10)),
+            child: SingleChildScrollView(
+              child: Column(
+                children: <Widget>[
+                  _logo(),
+                  _phoneTextField(),
+                  _buildLoginRegisterButton(),
+                ],
+              ),
+            )),
       ),
-      body: Container(
-          margin: EdgeInsets.all(ScreenAdapter.width(10)),
-          child: SingleChildScrollView(
-            child: Column(
-              children: <Widget>[
-                _logo(),
-                _buildEditWidget(),
-                _buildLoginRegisterButton(),
-              ],
-            ),
-          )),
+      onWillPop: ()async {
+        if(lastPopTime == null || DateTime.now().difference(lastPopTime) > Duration(seconds: 2)){
+          lastPopTime = DateTime.now();
+          Toast.toast(context,msg: '再按一次退出');
+          return false;
+        }else{
+          lastPopTime = DateTime.now();
+          // 退出app
+          await SystemChannels.platform.invokeMethod('SystemNavigator.pop');
+          return true;
+        }
+      },
     );
   }
 
-  //输入框
-  _buildEditWidget() {
+  //手机号输入框
+  _phoneTextField() {
     return Container(
       margin: EdgeInsets.only(
           left: ScreenAdapter.size(15),
@@ -137,49 +135,14 @@ class _loginPage extends State<LoginPage> {
           ),
           //_buildLoginNameTextField(),
           Divider(height: 1),
-          _buildPwdTextField(),
-//          MyTextWidget(
-//            controller: _pwdController,
-//            focusNode: _pwdFocusNode,
-//            hintText: "请输入密码",
-//            prefixIcon: Icons.https,
-//            isPwd: true,
-//          ),
-          //_buildPwdTextField(),
+          _pwdTextField(),
         ],
       ),
     );
   }
 
-//  _buildLoginNameTextField() {
-//    return TextFormField(
-//      keyboardType: TextInputType.number,
-//      controller: _userNameEditController,
-//      focusNode: _userNameFocusNode,
-//      decoration: InputDecoration(
-//        hintText: "手机号",
-//        hintStyle: TextStyle(fontSize: ScreenAdapter.size(28)),
-//        border: InputBorder.none,
-//        prefixIcon: Icon(
-//          Icons.add_call,
-//          color: Colors.grey,
-//        ),
-//        suffixIcon: (_userNameEditController.text ?? null).isEmpty
-//            ? Text("")
-//            : IconButton(
-//                icon: Icon(
-//                  Icons.cancel,
-//                  color: Colors.grey,
-//                ),
-//                onPressed: () {
-//                  _userNameEditController.clear();
-//                  _userNameFocusNode.unfocus();
-//                }),
-//      ),
-//    );
-//  }
-
-  _buildPwdTextField() {
+  //密码输入框
+  _pwdTextField() {
     return TextField(
         controller: _pwdController,
         focusNode: _pwdFocusNode,
@@ -195,12 +158,12 @@ class _loginPage extends State<LoginPage> {
           suffixIcon: (_pwdController.text ?? "").isEmpty
               ? FlatButton(
                   child: Text(
-                    "忘记密码",
+                    MyText.FORGET_PWD,
                     style: TextStyle(fontSize: ScreenAdapter.size(28)),
                   ),
                   onPressed: () {
                     _pwdFocusNode.unfocus();
-                    Application.router.navigateTo(context, "/userForgetPwd");
+                    Application.router.navigateTo(context, Routers.forgetPwd);
                   })
               : IconButton(
                   icon: Icon(
@@ -212,11 +175,11 @@ class _loginPage extends State<LoginPage> {
                       _pwdController.clear();
                       _pwdFocusNode.unfocus();
                     });
-
                   }),
         ));
   }
 
+  //登录，注册按钮
   _buildLoginRegisterButton() {
     return Container(
       margin: EdgeInsets.only(top: ScreenAdapter.height(20)),
@@ -233,9 +196,8 @@ class _loginPage extends State<LoginPage> {
                   Toast.toast(context, msg: "请输入电话号码");
                   return;
                 }
-                var phone = RegExp(
-                    '^((13[0-9])|(15[^4])|(166)|(17[0-8])|(18[0-9])|(19[8-9])|(147,145))\\d{8}\$');
-                if (!phone.hasMatch(_phoneController.text)) {
+                var phone = RegExp(Constant.REG_EXP);
+                if (!phone.hasMatch(_phoneController.text.trim())) {
                   Toast.toast(context, msg: "请输入正确的手机号");
                   return;
                 }
@@ -244,7 +206,7 @@ class _loginPage extends State<LoginPage> {
                   return;
                 }
                 //登录
-                _login(_phoneController.text, _pwdController.text);
+                _login(_phoneController.text.trim(), _pwdController.text.trim());
               },
             ),
           ),
@@ -254,9 +216,7 @@ class _loginPage extends State<LoginPage> {
               title: "注册",
               color: Colors.green[300],
               onTap: () {
-                Application.router
-                    .navigateTo(context, "/userRegister")
-                    .then((result) => {});
+                Application.router.navigateTo(context, Routers.userRegister);
               },
             ),
           )

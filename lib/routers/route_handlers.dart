@@ -1,3 +1,5 @@
+import 'package:dishes_app/tabs/homePage.dart';
+
 import '../pages/user/forget_pwd.dart';
 
 import '../pages/user/register.dart';
@@ -37,10 +39,9 @@ var editpNumHandler = Handler(
 //用户登录
 var userLoginHandler = Handler(
     handlerFunc: (BuildContext context, Map<String, List<String>> params) {
-      String json = params["params"]?.first ;
-  return LoginPage(params: json,);
+  return LoginPage();
 });
-//用户登录
+//用户注册
 var userRegisterHandler = Handler(
     handlerFunc: (BuildContext context, Map<String, List<String>> params) {
   return Register();
@@ -50,3 +51,8 @@ var userForgetPwdHandler = Handler(
     handlerFunc: (BuildContext context, Map<String, List<String>> params) {
   return ForgetPwd();
 });
+//扫码点餐
+var homeHandler = Handler(
+    handlerFunc: (BuildContext context, Map<String, List<String>> params) {
+      return HomePage();
+    });

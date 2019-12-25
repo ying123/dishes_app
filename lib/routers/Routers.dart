@@ -16,6 +16,8 @@ class Routers {
   static String userRegister ="/userRegister";
    //忘记密码
   static String forgetPwd ="/userForgetPwd";
+  //扫码点餐
+  static String home ="/home";
 
 
   static void configureRoutes(Router router) {
@@ -30,5 +32,6 @@ class Routers {
     router.define(userLogin, handler: userLoginHandler);
     router.define(userRegister, handler: userRegisterHandler);
     router.define(forgetPwd, handler: userForgetPwdHandler);
+    router.define(home, handler: homeHandler);
   }
 }

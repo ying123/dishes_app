@@ -1,6 +1,7 @@
 class Api{
-  //static String host="https://www.zlp.ltd/";
+  static String imgUrl="https://www.zlp.ltd/images/";
   static String host="http://192.168.1.3:8080/";
+  //static String host="https://www.zlp.ltd/";
 
   static String wsHost="ws://192.168.1.3:8080/webSocket/";
   //static String wsHost="ws://www.zlp.ltd/webSocket/";
@@ -17,6 +18,16 @@ class Api{
   //编辑
   static String cart_item_edit="api/orderDetail/edit";
 
-  //用户登录注册
-  static String userLogin = "api/user/login";
+  //登录
+  static String login = "api/user/login";
+
+  //注册
+  static String register = "api/user/register";
+
+  //密码修改
+  static String updatePwd = "api/user/updatePwd";
+  //获取验证码
+  static String getCode = "api/getCode/";
+  //获取验证码
+  static String uploadFile = "api/upload";
 }

@@ -1,4 +1,9 @@
 import 'dart:convert';
+import '../common/provider/user_provider.dart';
+import '../common/utils/toast.dart';
+import '../routers/Routers.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../services/user_storage.dart';
 import 'package:flutter/material.dart';
 import '../common/ScreenAdapter.dart';
@@ -12,6 +17,7 @@ class HomePage extends StatefulWidget {
 
 class _homePage extends State<HomePage> {
   TextEditingController controller;
+  DateTime lastPopTime;
   final List _list = [
     {"title": "1人", "checked": true, "p_num": true},
     {"title": "2人", "checked": false, "p_num": true},
@@ -103,159 +109,161 @@ class _homePage extends State<HomePage> {
     //计算每一项的宽度
     double width = ScreenAdapter.getScreenWidth();
     width = (width - ScreenAdapter.width(100)) / 4;
-    return Scaffold(
-      appBar: AppBar(
-        leading: null,
-        title: Text(
-          "用餐人数",
-          style: TextStyle(color: Colors.white),
+    return WillPopScope(
+      child: Scaffold(
+        appBar: AppBar(
+          leading: null,
+          title: Text(
+            "用餐人数",
+            style: TextStyle(color: Colors.white),
+          ),
+          centerTitle: true,
+          backgroundColor: Colors.green,
         ),
-        centerTitle: true,
-        backgroundColor: Colors.green,
-      ),
-      body: SingleChildScrollView(
-        child: Container(
-          color: Colors.white12,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: <Widget>[
-              Container(
-                height: ScreenAdapter.height(80),
-                width: ScreenAdapter.width(200),
-                margin: EdgeInsets.only(top: ScreenAdapter.height(80)),
-                alignment: Alignment.bottomCenter,
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(6.0),
-                    color: Colors.black),
-                child: Row(
-                  children: <Widget>[
-                    Container(
-                        padding: EdgeInsets.only(
-                            left: ScreenAdapter.width(20),
-                            right: ScreenAdapter.width(20)),
-                        alignment: Alignment.center,
-                        child: Image.asset(
-                          "./static/canju.png",
-                          width: ScreenAdapter.width(48),
-                          height: ScreenAdapter.height(48),
-                        )),
-                    Expanded(
-                        flex: 1,
-                        child: Text(
-                          "用餐人数",
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: ScreenAdapter.size(26)),
-                        ))
-                  ],
-                ),
-              ),
-              Container(
-                height: ScreenAdapter.height(50),
-                margin: EdgeInsets.only(top: ScreenAdapter.height(20)),
-                child: Text(
-                  "请选择正确的用餐人数，小二马上为您送餐",
-                  style: TextStyle(
-                      color: Colors.red, fontSize: ScreenAdapter.size(26)),
-                ),
-              ),
-              //人数列表
-
-              Container(
-                width: ScreenAdapter.getScreenWidth(),
-                child: Wrap(
-                    direction: Axis.horizontal,
-                    children: _listWidgets(width, this._list)),
-              ),
-
-              Container(
-                margin: EdgeInsets.only(
-                    top: ScreenAdapter.height(30),
-                    left: ScreenAdapter.width(20),
-                    right: ScreenAdapter.width(20)),
-                padding: EdgeInsets.only(
-                    left: ScreenAdapter.height(30),
-                    right: ScreenAdapter.height(30)),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(6.0),
-                  border: Border.all(color: Colors.grey[300]),
-                ),
-                child: TextField(
-                  controller: controller,
-                  onChanged: (value) {
-                    setState(() {
-                      _p_mark = value;
-                    });
-                  },
-                  decoration: InputDecoration(
-                      hintText: "请输入您的口味要求，忌口等(可不填)",
-                      hintStyle: TextStyle(fontSize: ScreenAdapter.size(26)),
-                      border: InputBorder.none),
-                ),
-              ),
-              //选择口味
-
-              Container(
-                width: ScreenAdapter.getScreenWidth(),
-                child: Wrap(
-                    direction: Axis.horizontal,
-                    children: _listWidgets(width, this._listKw)),
-              ),
-              Container(
-                margin: EdgeInsets.only(top: ScreenAdapter.height(50)),
-                width: ScreenAdapter.width(130),
-                height: ScreenAdapter.height(130),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.red,
-                ),
-                child: GestureDetector(
-                  onTap: () async {
-                    //1,判断用户是否登录
-                    var user = await UserStorage.getUser();
-                    if (user == null) {
-                      var param={"tableNo":this._barcode,"personNum":this._p_num,"remark":this._p_mark};
-                      String jsonString = json.encode(param);
-                      var jsons = jsonEncode(Utf8Encoder().convert(jsonString));
-                      Application.router.navigateTo(context, "/userLogin?params=${jsons}", transition: TransitionType.fadeIn, replace: true);
-                    } else {
-                      //this._barcode = await _scan(); //扫描桌子号
-                      Application.tableNo=this._barcode;
-                      Application.personNum=this._p_num;
-                      Application.remark=this._p_mark;
-                      Application.phone=user['phone'];
-                      var param={"currentIndex":0,"phone":user['phone'],"tableNo":this._barcode,"personNum":this._p_num,"remark":this._p_mark};
-                      String jsonString = json.encode(param);
-                      var jsons = jsonEncode(Utf8Encoder().convert(jsonString));
-                      //Provider.of<Order_Information_Provider>(context).setInfo(OrderInformation.fromJson(param));
-                      Application.router
-                          .navigateTo(
-                          context, "/root?params=${jsons}",
-                          transition: TransitionType.fadeIn, replace: true)
-                          .then((result) {
-                        if (result != null) {}
-                      });
-                    }
-                  },
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+        body: SingleChildScrollView(
+          child: Container(
+            color: Colors.white12,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: <Widget>[
+                Container(
+                  height: ScreenAdapter.height(80),
+                  width: ScreenAdapter.width(200),
+                  margin: EdgeInsets.only(top: ScreenAdapter.height(80)),
+                  alignment: Alignment.bottomCenter,
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(6.0),
+                      color: Colors.black),
+                  child: Row(
                     children: <Widget>[
-                      Text(
-                        "扫码",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      Text(
-                        "点菜",
-                        style: TextStyle(color: Colors.white),
-                      ),
+                      Container(
+                          padding: EdgeInsets.only(
+                              left: ScreenAdapter.width(20),
+                              right: ScreenAdapter.width(20)),
+                          alignment: Alignment.center,
+                          child: Image.asset(
+                            "./static/canju.png",
+                            width: ScreenAdapter.width(48),
+                            height: ScreenAdapter.height(48),
+                          )),
+                      Expanded(
+                          flex: 1,
+                          child: Text(
+                            "用餐人数",
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: ScreenAdapter.size(26)),
+                          ))
                     ],
                   ),
                 ),
-              ),
-            ],
+                Container(
+                  height: ScreenAdapter.height(50),
+                  margin: EdgeInsets.only(top: ScreenAdapter.height(20)),
+                  child: Text(
+                    "请选择用餐人数，小二马上为您送餐",
+                    style: TextStyle(
+                        color: Colors.red, fontSize: ScreenAdapter.size(26)),
+                  ),
+                ),
+                //人数列表
+
+                Container(
+                  width: ScreenAdapter.getScreenWidth(),
+                  child: Wrap(
+                      direction: Axis.horizontal,
+                      children: _listWidgets(width, this._list)),
+                ),
+
+                Container(
+                  margin: EdgeInsets.only(
+                      top: ScreenAdapter.height(30),
+                      left: ScreenAdapter.width(20),
+                      right: ScreenAdapter.width(20)),
+                  padding: EdgeInsets.only(
+                      left: ScreenAdapter.height(30),
+                      right: ScreenAdapter.height(30)),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(6.0),
+                    border: Border.all(color: Colors.grey[300]),
+                  ),
+                  child: TextField(
+                    controller: controller,
+                    onChanged: (value) {
+                      setState(() {
+                        _p_mark = value;
+                      });
+                    },
+                    decoration: InputDecoration(
+                        hintText: "请输入您的口味要求，忌口等(可不填)",
+                        hintStyle: TextStyle(fontSize: ScreenAdapter.size(26)),
+                        border: InputBorder.none),
+                  ),
+                ),
+                //选择口味
+
+                Container(
+                  width: ScreenAdapter.getScreenWidth(),
+                  child: Wrap(
+                      direction: Axis.horizontal,
+                      children: _listWidgets(width, this._listKw)),
+                ),
+                Container(
+                  margin: EdgeInsets.only(top: ScreenAdapter.height(50)),
+                  width: ScreenAdapter.width(130),
+                  height: ScreenAdapter.height(130),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.red,
+                  ),
+                  child: GestureDetector(
+                    onTap: () async {
+                      //this._barcode = await _scan(); //扫描桌子号
+                      var user = await UserStorage.getUser();
+                      var params = {
+                        "phone": user["phone"],
+                        "tableNo": this._barcode,
+                        "personNum": this._p_num,
+                        "remark": this._p_mark,
+                        "currentIndex": 0
+                      };
+                      Provider.of<UserProvider>(context).setUser(params);
+                      Application.router.navigateTo(context,
+                          "${Routers.root}?params=${jsonEncode(Utf8Encoder().convert(json.encode(params)))}",
+                          transition: TransitionType.fadeIn, replace: true);
+                    },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Text(
+                          "扫码",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        Text(
+                          "点菜",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
+      onWillPop: ()async{
+        if(lastPopTime == null || DateTime.now().difference(lastPopTime) > Duration(seconds: 2)){
+          lastPopTime = DateTime.now();
+          Toast.toast(context,msg: '再按一次退出');
+          return false;
+        }else{
+          lastPopTime = DateTime.now();
+          // 退出app
+          await SystemChannels.platform.invokeMethod('SystemNavigator.pop');
+          return true;
+        }
+      },
     );
   }
 }

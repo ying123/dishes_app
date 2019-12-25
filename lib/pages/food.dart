@@ -1,4 +1,3 @@
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import '../common/ScreenAdapter.dart';
@@ -13,18 +12,41 @@ class Food extends StatefulWidget {
   State<StatefulWidget> createState() => _Food();
 }
 
-class _Food extends State<Food>
-    with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
+class _Food extends State<Food> with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
   TabController _tabController;
+  List<Widget> _tabs=[
+    Tab(
+      text: "热销榜",
+      icon: Image.asset(
+        "./static/rexiao.png",
+        width: ScreenAdapter.width(40),
+        height: ScreenAdapter.height(40),
+      ),
+    ),
+    Tab(
+      text: "点过的菜",
+      icon: Image.asset(
+        "./static/book.png",
+        width: ScreenAdapter.width(40),
+        height: ScreenAdapter.height(40),
+      ),
+    ),
+    Tab(
+      text: "搜你喜欢",
+      icon: Image.asset(
+        "./static/sousuo.png",
+        width: ScreenAdapter.width(40),
+        height: ScreenAdapter.height(40),
+      ),
+    ),
+  ];
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: _tabs.length, vsync: this);
   }
-
-
   @override
   void dispose() {
     _tabController.dispose();
@@ -41,35 +63,9 @@ class _Food extends State<Food>
           leading: null,
           centerTitle: true,
           bottom: TabBar(
-            
             controller: _tabController,
             isScrollable: false,
-            tabs: <Widget>[
-              Tab(
-                text: "热销榜",
-                icon: Image.asset(
-                  "./static/rexiao.png",
-                  width: ScreenAdapter.width(40),
-                  height: ScreenAdapter.height(40),
-                ),
-              ),
-              Tab(
-                text: "点过的菜",
-                icon: Image.asset(
-                  "./static/book.png",
-                  width: ScreenAdapter.width(40),
-                  height: ScreenAdapter.height(40),
-                ),
-              ),
-              Tab(
-                text: "搜你喜欢",
-                icon: Image.asset(
-                  "./static/sousuo.png",
-                  width: ScreenAdapter.width(40),
-                  height: ScreenAdapter.height(40),
-                ),
-              ),
-            ],
+            tabs: _tabs
           ),
         ),
         body: TabBarView(

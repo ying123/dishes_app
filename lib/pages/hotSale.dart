@@ -2,21 +2,24 @@ import '../common/widgets/loading.dart';
 import 'package:flutter/material.dart';
 import '../model/category.dart';
 import '../common/ScreenAdapter.dart';
-import '../common/Http.dart' as Http;
-import '../common/config/Config.dart' as Config;
+import '../common/http_util.dart';
+import '../common/config/api_config.dart' as Config;
 import '../routers/Application.dart';
 class HotSale extends StatefulWidget {
   @override
   _HotSale createState() => _HotSale();
 }
 
-class _HotSale extends State<HotSale> {
+class _HotSale extends State<HotSale> with AutomaticKeepAliveClientMixin {
+  //页面状态保持，重写此方法
+  @override
+  bool get wantKeepAlive => true;
   ScrollController _scrollController;
   List<CateGroy> _cateGroyList = [];//分类数据
   CateGroy _cateGroy;
     //首页数据
   _getFoodList() async{
-     await Http.get(Config.Api.cateGroyList).then((res) {
+     await HttpUtil.getInstance().get(Config.Api.cateGroyList).then((res) {
       CateGroyModel model=CateGroyModel.fromJson(res);
       setState(() {
         _cateGroyList=model.result;
@@ -173,4 +176,6 @@ class _HotSale extends State<HotSale> {
       ],
     );
   }
+
+
 }

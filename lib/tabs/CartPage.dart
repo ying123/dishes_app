@@ -1,21 +1,15 @@
 import 'dart:convert';
-
-import 'package:dishes_app/common/provider/current_index_provider.dart';
-
-import '../services/user_storage.dart';
+import 'package:dishes_app/routers/Routers.dart';
 import 'package:fluro/fluro.dart';
-
 import '../model/cart_info.dart';
-
-import '../model/orderDetail.dart';
 import 'package:flutter/material.dart';
 import '../common/provider/cart_provider.dart';
 import 'package:provider/provider.dart';
 import '../common/ScreenAdapter.dart';
 import '../common/widgets/MyButton.dart';
 import '../routers/Application.dart';
-import '../common/config/Config.dart' as Config;
-import '../common/Http.dart' as http;
+import '../common/config/api_config.dart' as Config;
+import '../common/http_util.dart';
 
 class CartPage extends StatefulWidget {
   var params;
@@ -68,7 +62,6 @@ class _CartPage extends State<CartPage> {
                 )
               ]),
         );
-
     });
   }
   @override
@@ -185,7 +178,7 @@ class _CartPage extends State<CartPage> {
                 widget.params["currentIndex"]=0;
                 String jsonString = json.encode(widget.params);
                 var jsons = jsonEncode(Utf8Encoder().convert(jsonString));
-                Application.router.navigateTo(context, "/root?params=${jsons}", transition: TransitionType.fadeIn,replace: true);
+                Application.router.navigateTo(context, "${Routers.root}?params=${jsons}", transition: TransitionType.fadeIn,replace: true);
               },
             ),
           ),
@@ -441,9 +434,10 @@ class _CartPage extends State<CartPage> {
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: <Widget>[
                             GestureDetector(
-                              onTap: () {
+                              onTap: () async{
                                 var data={"foodId":list[i].foodId,"tableNo":list[i].tableNo,"count":1,"operation":0 };
-                                http.post("${Config.Api.cart_item_edit}",formData:data );
+                                await HttpUtil.getInstance().post("${Config.Api.cart_item_edit}",data: data);
+                                //http.post("${Config.Api.cart_item_edit}",formData:data );
                               },
                               child: Container(
                                 width: ScreenAdapter.width(80),
@@ -472,9 +466,9 @@ class _CartPage extends State<CartPage> {
                               ),
                             ),
                             GestureDetector(
-                              onTap: () {
+                              onTap: ()async {
                                 var data={"foodId":list[i].foodId,"tableNo":list[i].tableNo,"count":1,"operation":1 };
-                                http.post("${Config.Api.cart_item_edit}",formData:data);
+                                await HttpUtil.getInstance().post("${Config.Api.cart_item_edit}",data: data);
                               },
                               child: Container(
                                 width: ScreenAdapter.width(80),
