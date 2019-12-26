@@ -1,3 +1,9 @@
+import 'package:dishes_app/common/provider/order_provider.dart';
+import 'package:dishes_app/common/utils/toast.dart';
+import 'package:dishes_app/model/order.dart';
+import 'package:dishes_app/routers/Routers.dart';
+import 'package:provider/provider.dart';
+
 import '../common/widgets/loading.dart';
 import 'package:flutter/material.dart';
 import '../model/category.dart';
@@ -56,11 +62,7 @@ class _HotSale extends State<HotSale> with AutomaticKeepAliveClientMixin {
     } else {
       for (int i = 0; i < cateGroy.foodList.length; i++) {
         _widgets.add(
-          GestureDetector(
-            onTap: (){
-              Application.router.navigateTo(context, "/foodDetail?foodId=${cateGroy.foodList[i].foodId}");
-            },
-            child: Container(
+            Container(
               width: width,
               height: ScreenAdapter.height(260),
               decoration: BoxDecoration(
@@ -71,42 +73,72 @@ class _HotSale extends State<HotSale> with AutomaticKeepAliveClientMixin {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: <Widget>[
-                  Container(
-                    height: ScreenAdapter.height(150),
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(6),
-                          topRight: Radius.circular(6),
-                        ),
-                        image: DecorationImage(
-                            fit: BoxFit.cover,
-                            image: NetworkImage(
-                                "https://www.zlp.ltd/images/${cateGroy.foodList[i].imgUrl}"))),
+                  GestureDetector(
+                    onTap: (){
+                        Application.router.navigateTo(context, "/foodDetail?foodId=${cateGroy.foodList[i].foodId}");
+                    },
+                    child: Container(
+                      height: ScreenAdapter.height(150),
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(6),
+                            topRight: Radius.circular(6),
+                          ),
+                          image: DecorationImage(
+                              fit: BoxFit.cover,
+                              image: NetworkImage(
+                                  "https://www.zlp.ltd/images/${cateGroy.foodList[i].imgUrl}"))),
+                    ),
                   ),
+
                   Container(
                     margin: EdgeInsets.only(top: ScreenAdapter.height(10)),
                     child: Align(
                       alignment: Alignment.topLeft,
                       child: Text(
                         cateGroy.foodList[i].foodName,
-                        style: TextStyle(fontSize: ScreenAdapter.size(26)),
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: ScreenAdapter.size(26),),
                       ),
                     ),
                   ),
                   Container(
                     margin: EdgeInsets.only(top: ScreenAdapter.height(10)),
-                    child: Align(
-                      alignment: Alignment.topLeft,
-                      child: Text(
-                        "￥${cateGroy.foodList[i].price}",
-                        style: TextStyle(fontSize: ScreenAdapter.size(26)),
-                      ),
-                    ),
+                    child: Row(
+                      children: <Widget>[
+                        Expanded(
+                          flex: 1,
+                          child: Align(
+                            alignment: Alignment.topLeft,
+                            child: Text(
+                              "￥${cateGroy.foodList[i].price}",
+                              style: TextStyle(fontSize: ScreenAdapter.size(26)),
+                            ),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: ()async{
+                            OrderModel model= Provider.of<OrderProvider>(context).getOrder;
+                            if(model.tableNo ==null){
+                              Application.router.navigateTo(context, Routers.home,replace: true,clearStack: true);
+                            }else{
+                              var data={"foodId":cateGroy.foodList[i].foodId,"tableNo":model.tableNo,"count":1,"operation":1 };
+                              await HttpUtil.getInstance().post("${Config.Api.cart_item_edit}",data:data );
+                            }
+                          },
+                          child: Align(
+                            alignment: Alignment.topRight,
+                            child: Icon(Icons.add_circle,size: ScreenAdapter.size(46),color: Colors.green,),
+                          ),
+                        ),
+
+                      ],
+                    )
                   ),
                 ],
               ),
             ),
-          ),
+
         );
       }
     }

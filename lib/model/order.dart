@@ -4,9 +4,9 @@ class OrderModel {
   String tableNo;
   String person;
   String orderTime;
-  int price;
+  double price;
   String remark;
-  Null overtime;
+  String overtime;
 
   OrderModel(
       {this.orderId,

@@ -15,7 +15,7 @@ class CartProvider with ChangeNotifier {
     _totalPrice=0.0;
     for(int i=0;i<_orders.length;i++){
       _totalCount+=_orders[i].count;
-      _totalPrice+=_orders[i].count * double.parse( _orders[i].price);
+      _totalPrice+=_orders[i].count * _orders[i].price;
     }
     notifyListeners();
   }
@@ -52,7 +52,7 @@ class CartProvider with ChangeNotifier {
     _totalPrice=0.0;
     for(int i=0;i<_orders.length;i++){
       _totalCount+=_orders[i].count;
-      _totalPrice+=_orders[i].count *double.parse( _orders[i].price);
+      _totalPrice+=_orders[i].count *_orders[i].price;
     }
     notifyListeners();
   }

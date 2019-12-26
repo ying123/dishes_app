@@ -1,4 +1,8 @@
 import 'dart:convert';
+import 'package:dishes_app/common/config/api_config.dart';
+import 'package:dishes_app/common/http_util.dart';
+import 'package:dishes_app/common/provider/order_provider.dart';
+import 'package:dishes_app/model/order.dart';
 import '../common/provider/user_provider.dart';
 import '../common/utils/toast.dart';
 import '../routers/Routers.dart';
@@ -221,16 +225,18 @@ class _homePage extends State<HomePage> {
                       //this._barcode = await _scan(); //扫描桌子号
                       var user = await UserStorage.getUser();
                       var params = {
-                        "phone": user["phone"],
+                        "person": user["phone"],
                         "tableNo": this._barcode,
                         "personNum": this._p_num,
                         "remark": this._p_mark,
                         "currentIndex": 0
                       };
-                      Provider.of<UserProvider>(context).setUser(params);
-                      Application.router.navigateTo(context,
-                          "${Routers.root}?params=${jsonEncode(Utf8Encoder().convert(json.encode(params)))}",
-                          transition: TransitionType.fadeIn, replace: true);
+                      await HttpUtil.getInstance().post(Api.addOrder,data: params).then((res){
+                        Provider.of<OrderProvider>(context).setOrder(OrderModel.fromJson(res["result"]));//保存订单信息
+                        Application.router.navigateTo(context,
+                            "${Routers.root}?params=${jsonEncode(Utf8Encoder().convert(json.encode(params)))}",
+                            transition: TransitionType.fadeIn, replace: true);
+                      });
                     },
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,

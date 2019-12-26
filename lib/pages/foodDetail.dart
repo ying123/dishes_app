@@ -1,5 +1,8 @@
 
 import 'dart:convert';
+import 'package:dishes_app/common/provider/order_provider.dart';
+import 'package:dishes_app/model/order.dart';
+
 import '../common/widgets/loading.dart';
 import '../routers/Routers.dart';
 import '../common/provider/user_provider.dart';
@@ -209,14 +212,14 @@ class _FoodDetail extends State<FoodDetail> {
                         title: "加入购物车",
                         size: 28,
                         onTap: () async{
-                          var model= Provider.of<UserProvider>(context).getUser;
-                          var data={"foodId":widget.foodId,"tableNo":model["tableNo"],"count":_count,"operation":1 };
+                          OrderModel model= Provider.of<OrderProvider>(context).getOrder;
+                          var data={"foodId":widget.foodId,"tableNo":model.tableNo,"count":_count,"operation":1 };
                           await HttpUtil.getInstance().post("${Config.Api.cart_item_edit}",data:data );
-                          var param={"currentIndex":1,"phone":model["phone"],"tableNo":model["tableNo"],"personNum":model["personNum"],"remark":model["remark"]};
-                          Application.router
-                              .navigateTo(
-                              context, "${Routers.root}?params=${jsonEncode(Utf8Encoder().convert(json.encode(param)))}",
-                              transition: TransitionType.fadeIn, replace: true);
+//                          var param={"currentIndex":1,"phone":model.person,"tableNo":model.tableNo,"personNum":model.personNum,"remark":model.remark};
+//                          Application.router
+//                              .navigateTo(
+//                              context, "${Routers.root}?params=${jsonEncode(Utf8Encoder().convert(json.encode(param)))}",
+//                              transition: TransitionType.fadeIn, replace: true);
                         },
                       ),
                     ),

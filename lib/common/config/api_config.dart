@@ -11,6 +11,8 @@ class Api{
 
   //根据商品id获取单个商品详情
   static String foodById = "api/food/foodId/";
+  //下单
+  static String addOrder = "api/order/add/";
 
   //获取购物车数据列表
   static String cart_info_listByTableNo="api/orderInfo/list/";
@@ -30,4 +32,7 @@ class Api{
   static String getCode = "api/getCode/";
   //获取验证码
   static String uploadFile = "api/upload";
+
+  //付款下单
+  static String accounts = "api/order/accounts";
 }

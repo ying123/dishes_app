@@ -1,4 +1,7 @@
 import 'dart:convert';
+import 'package:dishes_app/common/provider/order_provider.dart';
+import 'package:dishes_app/common/provider/user_provider.dart';
+import 'package:dishes_app/model/order.dart';
 import 'package:dishes_app/routers/Routers.dart';
 import 'package:fluro/fluro.dart';
 import '../model/cart_info.dart';
@@ -8,7 +11,7 @@ import 'package:provider/provider.dart';
 import '../common/ScreenAdapter.dart';
 import '../common/widgets/MyButton.dart';
 import '../routers/Application.dart';
-import '../common/config/api_config.dart' as Config;
+import '../common/config/api_config.dart';
 import '../common/http_util.dart';
 
 class CartPage extends StatefulWidget {
@@ -39,8 +42,14 @@ class _CartPage extends State<CartPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
                 GestureDetector(
-                  onTap: (){
-                    Navigator.of(context).pop();
+                  onTap: () async{
+                    await HttpUtil.getInstance().post(Api.accounts,data: {"tableNo":widget.params["tableNo"],"price":"${Provider.of<CartProvider>(context).totalPrice}"}).then((res){
+                      if(res["result"]){
+                        Provider.of<CartProvider>(context).setOrders(List<OrderInfo>());
+                        Provider.of<OrderProvider>(context).setOrder(OrderModel());
+                        Navigator.of(context).pop();
+                      }
+                    });
                   },
                   child: Container(
                     width: ScreenAdapter.height(100),
@@ -84,7 +93,7 @@ class _CartPage extends State<CartPage> {
       width: double.infinity,
       child: Center(
         child: Text(
-          "购物车空空如也",
+          "餐车空空如也,快去点餐吧",
           style: TextStyle(fontSize: ScreenAdapter.size(30)),
         ),
       ),
@@ -98,7 +107,7 @@ class _CartPage extends State<CartPage> {
     ScreenAdapter.init(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text("购物车"),
+        title: Text("我的餐车"),
         leading: null,
         centerTitle: true,
         backgroundColor: Theme.of(context).primaryColor,
@@ -136,7 +145,7 @@ class _CartPage extends State<CartPage> {
                         Container(
                           child: Center(
                             child: Text(
-                              "本店最常点的菜",
+                              "本店顾客最常点的菜",
                               style:
                                   TextStyle(fontSize: ScreenAdapter.size(30)),
                             ),
@@ -162,36 +171,21 @@ class _CartPage extends State<CartPage> {
   _bottomButton() {
     return Container(
       width: double.infinity,
-      height: ScreenAdapter.height(110),
+      height: ScreenAdapter.height(100),
+      padding: EdgeInsets.fromLTRB(ScreenAdapter.width(10), 0, ScreenAdapter.width(10), 0),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(top: BorderSide(color: Colors.grey[300])),
       ),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            flex: 1,
-            child: MyButton(
-              title: "继续点菜",
-              color: Colors.green[300],
-              onTap: (){
-                widget.params["currentIndex"]=0;
-                String jsonString = json.encode(widget.params);
-                var jsons = jsonEncode(Utf8Encoder().convert(jsonString));
-                Application.router.navigateTo(context, "${Routers.root}?params=${jsons}", transition: TransitionType.fadeIn,replace: true);
-              },
-            ),
-          ),
-          Expanded(
-            flex: 1,
-            child: MyButton(
-              title: "下单(${Provider.of<CartProvider>(context).totalPrice})",
-              onTap: () {
-                _showBottomSheet();
-              },
-            ),
-          )
-        ],
+      child: MyButton(
+        title: Provider.of<CartProvider>(context).totalPrice==0?"下单":"下单(${Provider.of<CartProvider>(context).totalPrice})",
+        onTap: () {
+          if(Provider.of<CartProvider>(context).totalPrice==0){
+
+            return;
+          }
+          _showBottomSheet();
+        },
       ),
     );
   }
@@ -284,7 +278,7 @@ class _CartPage extends State<CartPage> {
                         child: Align(
                           alignment: Alignment.topLeft,
                           child: Text(
-                            "用餐人数：${widget.params["personNum"]}",
+                            "用餐人数：${Provider.of<OrderProvider>(context).getOrder.personNum??""}",
                             style: TextStyle(
                                 color: Colors.red,
                                 fontSize: ScreenAdapter.size(26)),
@@ -296,7 +290,7 @@ class _CartPage extends State<CartPage> {
                         child: Align(
                           alignment: Alignment.topLeft,
                           child: Text(
-                            "备注：${widget.params["remark"]=="not"?"":widget.params["remark"]}",
+                            "备注：${Provider.of<OrderProvider>(context).getOrder.remark??""}",
                             style: TextStyle(fontSize: ScreenAdapter.size(26)),
                           ),
                         ),
@@ -436,7 +430,7 @@ class _CartPage extends State<CartPage> {
                             GestureDetector(
                               onTap: () async{
                                 var data={"foodId":list[i].foodId,"tableNo":list[i].tableNo,"count":1,"operation":0 };
-                                await HttpUtil.getInstance().post("${Config.Api.cart_item_edit}",data: data);
+                                await HttpUtil.getInstance().post("${Api.cart_item_edit}",data: data);
                                 //http.post("${Config.Api.cart_item_edit}",formData:data );
                               },
                               child: Container(
@@ -468,7 +462,7 @@ class _CartPage extends State<CartPage> {
                             GestureDetector(
                               onTap: ()async {
                                 var data={"foodId":list[i].foodId,"tableNo":list[i].tableNo,"count":1,"operation":1 };
-                                await HttpUtil.getInstance().post("${Config.Api.cart_item_edit}",data: data);
+                                await HttpUtil.getInstance().post("${Api.cart_item_edit}",data: data);
                               },
                               child: Container(
                                 width: ScreenAdapter.width(80),

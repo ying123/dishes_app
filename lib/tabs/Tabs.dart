@@ -12,7 +12,7 @@ import '../pages/food.dart';
 import 'CartPage.dart';
 import 'MyPage.dart';
 import '../common/ScreenAdapter.dart';
-import '../common/config/api_config.dart' as Config;
+import '../common/config/api_config.dart';
 import '../common/http_util.dart';
 
 class Tabs extends StatefulWidget {
@@ -30,7 +30,6 @@ class _Tabs extends State<Tabs> {
 
 
   _init() {
-
     var list = List<int>();
     ///字符串解码
     jsonDecode(widget.params).forEach(list.add);
@@ -38,26 +37,16 @@ class _Tabs extends State<Tabs> {
     _params = json.decode(value);
     _listPages = [Food(params: _params,), CartPage(params: _params,), MyPage(_params)];
     _getCartList();
-    String webSocket="";
-
-    if(_params["remark"]==""){
-      _params["remark"]="not";
-    }
-    webSocket='${Config.Api.wsHost}${_params["tableNo"]}/${_params["phone"]}/${_params["personNum"]}/${_params["remark"]}';
     //初始化连接服务器
-    _channel = IOWebSocketChannel.connect(webSocket);
+    _channel = IOWebSocketChannel.connect('${Api.wsHost+_params["tableNo"]}');//webSocket服务地址
     _channel.stream.listen((message) {
-      var data= json.decode(message);
-      if(data["code"]==null){
-        Provider.of<OrderProvider>(context).setOrder(OrderModel.fromJson(data));
-      }else{
-        Provider.of<CartProvider>(context).editOrder(OrderInfo.fromJson(data));
-      }
+      //接收服务器推送的消息，保存Provider
+      Provider.of<CartProvider>(context).editOrder(OrderInfo.fromJson(json.decode(message)));
     });
   }
   //获取购物车列表
   _getCartList() async{
-    await HttpUtil.getInstance().get("${Config.Api.cart_info_listByTableNo}/${_params["tableNo"]}").then((res){
+    await HttpUtil.getInstance().get("${Api.cart_info_listByTableNo}/${_params["tableNo"]}").then((res){
       OrderInfoModel orderInfo=OrderInfoModel.fromJson(res);
       if(orderInfo.result.length>0){
         Provider.of<CartProvider>(context).setOrders(orderInfo.result);
@@ -103,7 +92,7 @@ class _Tabs extends State<Tabs> {
             });
           },
           items: [
-            BottomNavigationBarItem(icon: Icon(Icons.home), title: Text("首页")),
+            BottomNavigationBarItem(icon: Icon(Icons.home), title: Text("点菜")),
             BottomNavigationBarItem(
               icon: Stack(
                 children: <Widget>[
@@ -139,10 +128,10 @@ class _Tabs extends State<Tabs> {
                 ],
               ),
               //icon: Icon(Icons.add_shopping_cart),
-              title: Text("购物车"),
+              title: Text("餐车"),
             ),
             BottomNavigationBarItem(
-                icon: Icon(Icons.account_circle), title: Text("我的")),
+                icon: Icon(Icons.account_circle), title: Text("用户中心")),
           ],
         ),
       ),

@@ -57,7 +57,6 @@ class HttpUtil {
     } on DioError catch (e) {
       _formatError(e);
     }
-    print(response);
     return response.data;
   }
 

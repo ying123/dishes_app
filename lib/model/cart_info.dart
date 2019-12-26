@@ -29,7 +29,7 @@ class OrderInfo {
   int foodId;
   int count;
   String foodName;
-  String price;
+  double price;
   String imgUrl;
   String code;
   OrderInfo(
@@ -46,7 +46,7 @@ class OrderInfo {
     foodId = json['foodId'];
     count = json['count'];
     foodName = json['foodName'];
-    price = json['price'];
+    price = double.parse(json['price']) ;
     imgUrl = json['imgUrl'];
     code = json['code'];
   }
