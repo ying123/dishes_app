@@ -1,7 +1,6 @@
-import 'dart:convert';
+
 import 'dart:developer';
 import 'package:dio/dio.dart';
-import 'dart:io';
 import 'dart:async';
 
 import '../routers/Application.dart';
@@ -20,8 +19,8 @@ class HttpUtil {
     //BaseOptions、Options、RequestOptions 都可以配置参数，优先级别依次递增，且可以根据优先级别覆盖参数
     _options = new BaseOptions(
         //请求地址
-         //baseUrl: "https://www.zlp.ltd/",
-        baseUrl: "http://192.168.1.3:8080/",
+         baseUrl: "https://www.zlp.ltd/",
+        //baseUrl: "http://192.168.1.3:8080/",
         //连接服务器超时时间，单位是毫秒.
         connectTimeout: 10000,
         //响应流上前后两次接受到数据的间隔，单位为毫秒。

@@ -1,3 +1,4 @@
+import 'package:dishes_app/pages/order/order_page.dart';
 import 'package:dishes_app/tabs/homePage.dart';
 
 import '../pages/user/forget_pwd.dart';
@@ -9,7 +10,6 @@ import 'package:fluro/fluro.dart';
 import 'package:flutter/material.dart';
 import '../pages/edit_p_num.dart';
 import '../tabs/Tabs.dart';
-import '../pages/food.dart';
 import '../pages/foodDetail.dart';
 
 var rootHandler = Handler(
@@ -19,7 +19,7 @@ var rootHandler = Handler(
 });
 var foodHandler = Handler(
     handlerFunc: (BuildContext context, Map<String, List<String>> params) {
-  return Food();
+
 });
 
 //菜品详情
@@ -33,8 +33,7 @@ var foodDetailHandler = Handler(
 //修改用餐人数
 var editpNumHandler = Handler(
     handlerFunc: (BuildContext context, Map<String, List<String>> params) {
-      String json = params["params"]?.first  ;
-  return Edit_PNum(params:json);
+  return Edit_PNum();
 });
 //用户登录
 var userLoginHandler = Handler(
@@ -55,4 +54,10 @@ var userForgetPwdHandler = Handler(
 var homeHandler = Handler(
     handlerFunc: (BuildContext context, Map<String, List<String>> params) {
       return HomePage();
+    });
+//我的订单
+var orderHandler = Handler(
+    handlerFunc: (BuildContext context, Map<String, List<String>> params) {
+      String phone = params["phone"]?.first  ;
+      return OrderPage(phone);
     });

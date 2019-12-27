@@ -50,7 +50,7 @@ class _loginPage extends State<LoginPage> {
            UserStorage.setUser({Constant.phone: phone, Constant.pwd: pwd,"token":user.token});//用户名密码存本地
            Application.token=user.token;
            Provider.of<UserProvider>(context).setUser(res[Constant.result]);
-           Application.router.navigateTo(context, Routers.home,replace: true,clearStack: true,transition: TransitionType.fadeIn);
+           Application.router.navigateTo(context, Routers.home,replace: true,transition: TransitionType.fadeIn);
          }
        }
      });

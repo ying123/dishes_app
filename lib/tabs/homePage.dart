@@ -3,7 +3,6 @@ import 'package:dishes_app/common/config/api_config.dart';
 import 'package:dishes_app/common/http_util.dart';
 import 'package:dishes_app/common/provider/order_provider.dart';
 import 'package:dishes_app/model/order.dart';
-import '../common/provider/user_provider.dart';
 import '../common/utils/toast.dart';
 import '../routers/Routers.dart';
 import 'package:flutter/services.dart';
@@ -13,8 +12,7 @@ import 'package:flutter/material.dart';
 import '../common/ScreenAdapter.dart';
 import '../routers/Application.dart';
 import 'package:fluro/fluro.dart';
-import 'package:qrscan/qrscan.dart' as scanner;
-
+import 'package:barcode_scan/barcode_scan.dart';
 class HomePage extends StatefulWidget {
   State<StatefulWidget> createState() => _homePage();
 }
@@ -43,7 +41,7 @@ class _homePage extends State<HomePage> {
   ];
   String _p_num = "1人"; //人数
   String _p_mark = ""; //口味
-  String _barcode = "a001";
+  String _barcode;
 
   @override
   void initState() {
@@ -51,9 +49,28 @@ class _homePage extends State<HomePage> {
     controller = TextEditingController();
   }
 
+  //  扫描二维码
   Future _scan() async {
-    String barcode = await scanner.scan();
-    setState(() => this._barcode = barcode);
+    try {
+      String barcode = await BarcodeScanner.scan();
+      setState(() {
+        return _barcode=barcode;
+      });
+    } on PlatformException catch (e) {
+      if (e.code == BarcodeScanner.CameraAccessDenied) {
+        // 未授予APP相机权限
+        Toast.toast(context,msg:"未授予APP相机权限" );
+      } else {
+        // 扫码错误
+        Toast.toast(context,msg:"扫码错误" );
+      }
+    } on FormatException{
+      // 进入扫码页面后未扫码就返回
+      Toast.toast(context,msg:"扫码错误" );
+    } catch (e) {
+      // 扫码错误
+      Toast.toast(context,msg:"扫码错误" );
+    }
   }
 
   _change(int index, List list) {
@@ -222,7 +239,8 @@ class _homePage extends State<HomePage> {
                   ),
                   child: GestureDetector(
                     onTap: () async {
-                      //this._barcode = await _scan(); //扫描桌子号
+                      await _scan(); //扫描桌子号
+                      Toast.toast(context,msg: _barcode);
                       var user = await UserStorage.getUser();
                       var params = {
                         "person": user["phone"],

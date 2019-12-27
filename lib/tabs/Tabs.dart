@@ -1,14 +1,15 @@
 import 'dart:convert';
+import 'package:dishes_app/common/provider/order_provider.dart';
+import 'package:dishes_app/model/order.dart';
+
 import '../common/utils/toast.dart';
 import 'package:flutter/services.dart';
 import '../model/cart_info.dart';
-import '../common/provider/order_provider.dart';
-import '../model/order.dart';
 import '../common/provider/cart_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/io.dart';
-import '../pages/food.dart';
+import '../pages/food_page.dart';
 import 'CartPage.dart';
 import 'MyPage.dart';
 import '../common/ScreenAdapter.dart';
@@ -35,13 +36,20 @@ class _Tabs extends State<Tabs> {
     jsonDecode(widget.params).forEach(list.add);
     final String value = Utf8Decoder().convert(list);
     _params = json.decode(value);
-    _listPages = [Food(params: _params,), CartPage(params: _params,), MyPage(_params)];
+    _listPages = [FoodPage(), CartPage(params: _params,), MyPage(_params)];
     _getCartList();
     //初始化连接服务器
     _channel = IOWebSocketChannel.connect('${Api.wsHost+_params["tableNo"]}');//webSocket服务地址
     _channel.stream.listen((message) {
       //接收服务器推送的消息，保存Provider
-      Provider.of<CartProvider>(context).editOrder(OrderInfo.fromJson(json.decode(message)));
+      var data= json.decode(message);
+      if(data["orderId"]==null){
+        Provider.of<CartProvider>(context).editOrder(OrderInfo.fromJson(data));
+      }else{
+        Provider.of<OrderProvider>(context).setOrder(OrderModel.fromJson(data));
+      }
+
+
     });
   }
   //获取购物车列表

@@ -11,12 +11,12 @@ import '../common/ScreenAdapter.dart';
 import '../common/http_util.dart';
 import '../common/config/api_config.dart' as Config;
 import '../routers/Application.dart';
-class HotSale extends StatefulWidget {
+class FoodPage extends StatefulWidget {
   @override
-  _HotSale createState() => _HotSale();
+  _FoodPage createState() => _FoodPage();
 }
 
-class _HotSale extends State<HotSale> with AutomaticKeepAliveClientMixin {
+class _FoodPage extends State<FoodPage> with AutomaticKeepAliveClientMixin {
   //页面状态保持，重写此方法
   @override
   bool get wantKeepAlive => true;
@@ -131,7 +131,6 @@ class _HotSale extends State<HotSale> with AutomaticKeepAliveClientMixin {
                             child: Icon(Icons.add_circle,size: ScreenAdapter.size(46),color: Colors.green,),
                           ),
                         ),
-
                       ],
                     )
                   ),
@@ -151,61 +150,67 @@ class _HotSale extends State<HotSale> with AutomaticKeepAliveClientMixin {
     //计算容器宽度
     double contentWidth = ScreenAdapter.getScreenWidth();
     contentWidth = (contentWidth - ScreenAdapter.width(240)) / 3;
-    return Row(
-      children: <Widget>[
-        Container(
-          width: ScreenAdapter.width(200),
-          decoration: BoxDecoration(
-              border: Border(right: BorderSide(color: Colors.grey[100]))),
-          child: ListView.builder(
-            controller: _scrollController,
-            itemCount: _cateGroyList.length,
-            //预设高度，优化加载速度
-            itemExtent: ScreenAdapter.height(100),
-            itemBuilder: (context, index) {
-              return GestureDetector(
-                onTap: () {
-                  for (var i = 0; i < _cateGroyList.length; i++) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("菜品列表"),
+        centerTitle: true,
+      ),
+      body: Row(
+        children: <Widget>[
+          Container(
+            width: ScreenAdapter.width(200),
+            decoration: BoxDecoration(
+                border: Border(right: BorderSide(color: Colors.grey[100]))),
+            child: ListView.builder(
+              controller: _scrollController,
+              itemCount: _cateGroyList.length,
+              //预设高度，优化加载速度
+              itemExtent: ScreenAdapter.height(100),
+              itemBuilder: (context, index) {
+                return GestureDetector(
+                  onTap: () {
+                    for (var i = 0; i < _cateGroyList.length; i++) {
+                      setState(() {
+                        _cateGroyList[i].checked = false;
+                      });
+                    }
                     setState(() {
-                      _cateGroyList[i].checked = false;
+                      _cateGroyList[index].checked = true;
+                      this._cateGroy=_cateGroyList[index];
                     });
-                  }
-                  setState(() {
-                    _cateGroyList[index].checked = true;
-                    this._cateGroy=_cateGroyList[index];
-                  });
-                },
-                child: Container(
-                    decoration: BoxDecoration(
-                        color: _cateGroyList[index].checked
-                            ? Colors.green[100]
-                            : Colors.white,
-                        border: Border(
-                            bottom: BorderSide(color: Colors.grey[100]))),
-                    child: Center(
-                      child: Text(
-                        _cateGroyList[index].categroyName,
-                        style: TextStyle(
-                          fontSize: ScreenAdapter.size(24),
+                  },
+                  child: Container(
+                      decoration: BoxDecoration(
                           color: _cateGroyList[index].checked
-                              ? Colors.white
-                              : Colors.black54,
+                              ? Colors.green[100]
+                              : Colors.white,
+                          border: Border(
+                              bottom: BorderSide(color: Colors.grey[100]))),
+                      child: Center(
+                        child: Text(
+                          _cateGroyList[index].categroyName,
+                          style: TextStyle(
+                            fontSize: ScreenAdapter.size(24),
+                            color: _cateGroyList[index].checked
+                                ? Colors.white
+                                : Colors.black54,
+                          ),
                         ),
-                      ),
-                    )),
-              );
-            },
+                      )),
+                );
+              },
+            ),
           ),
-        ),
-        Expanded(
-          flex: 1,
-          child: Container(
-            alignment: Alignment.topLeft,
-            color: Color.fromRGBO(247, 247, 247, 0.0),
-            child: Wrap(children: _listWidget(this._cateGroy, contentWidth)),
-          ),
-        )
-      ],
+          Expanded(
+            flex: 1,
+            child: Container(
+              alignment: Alignment.topLeft,
+              color: Color.fromRGBO(247, 247, 247, 0.0),
+              child: Wrap(children: _listWidget(this._cateGroy, contentWidth)),
+            ),
+          )
+        ],
+      ),
     );
   }
 

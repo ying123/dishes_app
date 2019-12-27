@@ -15,7 +15,6 @@ class MyPage extends StatefulWidget {
   MyPage(this.params);
   @override
   State<StatefulWidget> createState() {
-    // TODO: implement createState
     return _myPage();
   }
 }
@@ -117,11 +116,16 @@ class _myPage extends State<MyPage>{
           bottom: BorderSide(width: ScreenAdapter.size(1),color: Colors.grey[100]),
         ),
       ),
-      child: ListTile(
-        leading: Icon(Icons.list),
-        title: Text('我的订单'),
-        trailing: Icon(Icons.arrow_right),
-      ),
+      child: GestureDetector(
+        onTap: (){
+          Application.router.navigateTo(context, Routers.order+"?phone=${widget.params["person"]}");
+        },
+        child: ListTile(
+          leading: Icon(Icons.list),
+          title: Text('我的订单'),
+          trailing: Icon(Icons.arrow_right),
+        ),
+      )
     );
   }
 

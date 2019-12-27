@@ -28,7 +28,7 @@ dependencies:
   dio: "3.0.7"
   fluro: "^1.5.1"
   flutter_screenutil: ^0.5.3
-  qrscan: ^0.2.17
+  barcode_scan: ^1.0.0
   fluwx: ^1.0.4
   web_socket_channel: ^1.1.0
   flutter_spinkit: "^4.1.1"

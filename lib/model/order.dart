@@ -4,7 +4,7 @@ class OrderModel {
   String tableNo;
   String person;
   String orderTime;
-  double price;
+  num price;
   String remark;
   String overtime;
 

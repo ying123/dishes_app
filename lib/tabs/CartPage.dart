@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:dishes_app/common/provider/order_provider.dart';
 import 'package:dishes_app/common/provider/user_provider.dart';
+import 'package:dishes_app/model/category.dart';
+import 'package:dishes_app/model/food.dart' as prefix0;
 import 'package:dishes_app/model/order.dart';
 import 'package:dishes_app/routers/Routers.dart';
 import 'package:fluro/fluro.dart';
@@ -21,7 +23,9 @@ class CartPage extends StatefulWidget {
   _CartPage createState() => _CartPage();
 }
 
-class _CartPage extends State<CartPage> {
+class _CartPage extends State<CartPage> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
   _divider() {
     return Container(
       margin: EdgeInsets.only(top: ScreenAdapter.height(20)),
@@ -33,6 +37,7 @@ class _CartPage extends State<CartPage> {
   }
 
   List<OrderInfo> _orderList = [];
+  List<FoodModel> _foodLike=[];
   //底部弹出框
   _showBottomSheet() {
     showBottomSheet(context: context, builder: (context) {
@@ -81,6 +86,15 @@ class _CartPage extends State<CartPage> {
   @override
   void initState() {
     super.initState();
+    HttpUtil.getInstance().get(Api.sellLike).then((res){
+      List<FoodModel> data=[];
+      res["result"].forEach((v) {
+        data.add(FoodModel.fromJson(v));
+      });
+      setState(() {
+        this._foodLike=data;
+      });
+    });
   }
   @override
   
@@ -208,18 +222,24 @@ class _CartPage extends State<CartPage> {
         itemBuilder: (context, index) {
           return Column(
             children: <Widget>[
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.all(Radius.circular(6)),
-                  image: DecorationImage(
-                    fit: BoxFit.cover,
-                    image: AssetImage("./static/${index + 1}.jpg"),
+              GestureDetector(
+                onTap: (){
+                  Application.router.navigateTo(context, "/foodDetail?foodId=${_foodLike[index].foodId}");
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.all(Radius.circular(6)),
+                    image: DecorationImage(
+                      fit: BoxFit.cover,
+                      image: NetworkImage("${Api.imgUrl+_foodLike[index].imgUrl}"),
+                    ),
                   ),
+                  width: ScreenAdapter.height(180),
+                  height: ScreenAdapter.height(180),
+                  margin: EdgeInsets.only(right: ScreenAdapter.width(20)),
                 ),
-                width: ScreenAdapter.height(180),
-                height: ScreenAdapter.height(180),
-                margin: EdgeInsets.only(right: ScreenAdapter.width(20)),
               ),
+
               Container(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
@@ -229,7 +249,7 @@ class _CartPage extends State<CartPage> {
                       child: Align(
                         alignment: Alignment.topLeft,
                         child: Text(
-                          "娃娃菜炖豆腐",
+                          "${_foodLike[index].foodName}",
                           style: TextStyle(fontSize: ScreenAdapter.size(24)),
                         ),
                       ),
@@ -239,7 +259,7 @@ class _CartPage extends State<CartPage> {
                       child: Align(
                         alignment: Alignment.topLeft,
                         child: Text(
-                          "￥22",
+                          "￥${_foodLike[index].price}",
                           style: TextStyle(fontSize: ScreenAdapter.size(24)),
                         ),
                       ),
@@ -252,7 +272,7 @@ class _CartPage extends State<CartPage> {
             ],
           );
         },
-        itemCount: 6,
+        itemCount: _foodLike.length,
       ),
     );
   }
@@ -303,12 +323,9 @@ class _CartPage extends State<CartPage> {
                 width: ScreenAdapter.width(100),
                 child: GestureDetector(
                   onTap: () {
-                    String jsonString = json.encode(widget.params);
-                    var jsons = jsonEncode(Utf8Encoder().convert(jsonString));
-                    Application.router
-                        .navigateTo(context, "/editpNum?params=${jsons}",
-                            replace: true, clearStack: true)
-                        .then((result) => {});
+//                    String jsonString = json.encode(widget.params);
+//                    var jsons = jsonEncode(Utf8Encoder().convert(jsonString));
+                    Application.router.navigateTo(context, Routers.editpNum);
                   },
                   child: Column(
                     children: <Widget>[

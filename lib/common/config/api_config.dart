@@ -1,18 +1,23 @@
 class Api{
   static String imgUrl="https://www.zlp.ltd/images/";
-  static String host="http://192.168.1.3:8080/";
-  //static String host="https://www.zlp.ltd/";
+  //static String host="http://192.168.1.3:8080/";
+  static String host="https://www.zlp.ltd/";
 
-  static String wsHost="ws://192.168.1.3:8080/webSocket/";
-  //static String wsHost="ws://www.zlp.ltd/webSocket/";
+  //static String wsHost="ws://192.168.1.3:8080/webSocket/";
+  static String wsHost="ws://www.zlp.ltd/webSocket/";
 
   //获取分类数据
   static String cateGroyList = "api/cateGroy/list";
 
   //根据商品id获取单个商品详情
   static String foodById = "api/food/foodId/";
+
+  //最常点的菜
+  static String sellLike = "api/food/sellLike";
   //下单
   static String addOrder = "api/order/add/";
+  //修改订单信息
+  static String updateOrder = "api/order/update/";
 
   //获取购物车数据列表
   static String cart_info_listByTableNo="api/orderInfo/list/";
@@ -35,4 +40,9 @@ class Api{
 
   //付款下单
   static String accounts = "api/order/accounts";
+
+  //今日订单
+  static String todayOrder = "api/order/hist/today/";
+
+
 }

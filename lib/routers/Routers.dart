@@ -19,6 +19,9 @@ class Routers {
   //扫码点餐
   static String home ="/home";
 
+  //忘记密码
+  static String order ="/order";
+
 
   static void configureRoutes(Router router) {
     router.notFoundHandler = Handler(
@@ -32,6 +35,7 @@ class Routers {
     router.define(userLogin, handler: userLoginHandler);
     router.define(userRegister, handler: userRegisterHandler);
     router.define(forgetPwd, handler: userForgetPwdHandler);
+    router.define(order, handler: orderHandler);
     router.define(home, handler: homeHandler);
   }
 }
