@@ -12,7 +12,8 @@ import 'package:flutter/material.dart';
 import '../common/ScreenAdapter.dart';
 import '../routers/Application.dart';
 import 'package:fluro/fluro.dart';
-import 'package:barcode_scan/barcode_scan.dart';
+//import 'package:barcode_scan/barcode_scan.dart';
+
 class HomePage extends StatefulWidget {
   State<StatefulWidget> createState() => _homePage();
 }
@@ -41,7 +42,7 @@ class _homePage extends State<HomePage> {
   ];
   String _p_num = "1人"; //人数
   String _p_mark = ""; //口味
-  String _barcode;
+  String _barcode="a001";
 
   @override
   void initState() {
@@ -51,26 +52,26 @@ class _homePage extends State<HomePage> {
 
   //  扫描二维码
   Future _scan() async {
-    try {
-      String barcode = await BarcodeScanner.scan();
-      setState(() {
-        return _barcode=barcode;
-      });
-    } on PlatformException catch (e) {
-      if (e.code == BarcodeScanner.CameraAccessDenied) {
-        // 未授予APP相机权限
-        Toast.toast(context,msg:"未授予APP相机权限" );
-      } else {
-        // 扫码错误
-        Toast.toast(context,msg:"扫码错误" );
-      }
-    } on FormatException{
-      // 进入扫码页面后未扫码就返回
-      Toast.toast(context,msg:"扫码错误" );
-    } catch (e) {
-      // 扫码错误
-      Toast.toast(context,msg:"扫码错误" );
-    }
+//    try {
+//      String barcode = await BarcodeScanner.scan();
+//      setState(() {
+//        return _barcode = barcode;
+//      });
+//    } on PlatformException catch (e) {
+//      if (e.code == BarcodeScanner.CameraAccessDenied) {
+//        // 未授予APP相机权限
+//        Toast.toast(context, msg: "未授予APP相机权限");
+//      } else {
+//        // 扫码错误
+//        Toast.toast(context, msg: "扫码错误");
+//      }
+//    } on FormatException {
+//      // 进入扫码页面后未扫码就返回
+//      Toast.toast(context, msg: "扫码错误");
+//    } catch (e) {
+//      // 扫码错误
+//      Toast.toast(context, msg: "扫码错误");
+//    }
   }
 
   _change(int index, List list) {
@@ -239,8 +240,7 @@ class _homePage extends State<HomePage> {
                   ),
                   child: GestureDetector(
                     onTap: () async {
-                      await _scan(); //扫描桌子号
-                      Toast.toast(context,msg: _barcode);
+                      //await _scan(); //扫描桌子号
                       var user = await UserStorage.getUser();
                       var params = {
                         "person": user["phone"],
@@ -249,8 +249,11 @@ class _homePage extends State<HomePage> {
                         "remark": this._p_mark,
                         "currentIndex": 0
                       };
-                      await HttpUtil.getInstance().post(Api.addOrder,data: params).then((res){
-                        Provider.of<OrderProvider>(context).setOrder(OrderModel.fromJson(res["result"]));//保存订单信息
+                      await HttpUtil.getInstance()
+                          .post(Api.addOrder, data: params)
+                          .then((res) {
+                        Provider.of<OrderProvider>(context).setOrder(
+                            OrderModel.fromJson(res["result"])); //保存订单信息
                         Application.router.navigateTo(context,
                             "${Routers.root}?params=${jsonEncode(Utf8Encoder().convert(json.encode(params)))}",
                             transition: TransitionType.fadeIn, replace: true);
@@ -276,12 +279,13 @@ class _homePage extends State<HomePage> {
           ),
         ),
       ),
-      onWillPop: ()async{
-        if(lastPopTime == null || DateTime.now().difference(lastPopTime) > Duration(seconds: 2)){
+      onWillPop: () async {
+        if (lastPopTime == null ||
+            DateTime.now().difference(lastPopTime) > Duration(seconds: 2)) {
           lastPopTime = DateTime.now();
-          Toast.toast(context,msg: '再按一次退出');
+          Toast.toast(context, msg: '再按一次退出');
           return false;
-        }else{
+        } else {
           lastPopTime = DateTime.now();
           // 退出app
           await SystemChannels.platform.invokeMethod('SystemNavigator.pop');
