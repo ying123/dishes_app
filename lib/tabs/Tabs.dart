@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:dishes_app/common/provider/order_provider.dart';
 import 'package:dishes_app/model/order.dart';
@@ -48,9 +49,18 @@ class _Tabs extends State<Tabs> {
       }else{
         Provider.of<OrderProvider>(context).setOrder(OrderModel.fromJson(data));
       }
-
+    });
+    const period = const Duration(seconds: 60);
+    Timer.periodic(period, (timer){
+      print(DateTime.now().toString());
+      if(_channel.sink==null){
+        timer.cancel();
+      }else{
+        _channel.sink.add("ping");
+      }
 
     });
+
   }
   //获取购物车列表
   _getCartList() async{
